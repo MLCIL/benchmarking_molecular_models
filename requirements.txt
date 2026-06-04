@@ -123,7 +123,7 @@ openpyxl==3.1.5
 outdated==0.2.2
 overrides==7.7.0
 packaging==24.2
-pandas==1.5.3
+pandas==2.2.3
 pandas_flavor==0.7.0
 pandocfilters==1.5.1
 parso==0.8.4
@@ -147,7 +147,7 @@ Pygments==2.18.0
 pynndescent==0.5.13
 pyparsing==3.2.0
 PySocks==1.7.1
-pytdc==1.1.15
+pytdc<1.0
 python-dateutil==2.9.0.post0
 python-json-logger==3.2.1
 pytz==2024.2
