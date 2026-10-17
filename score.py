@@ -53,8 +53,16 @@ def main(cfg: DictConfig):
     override = not cfg.cache if "cache" in cfg else False
     print(f"Override status {override}")
 
+    # Optional `heads` override (e.g. `+heads=[rf,ridge]`) to score a subset of
+    # the supervised heads; defaults to all of AVAILABLE_HEADS.
+    heads = list(cfg.heads) if "heads" in cfg and cfg.heads else AVAILABLE_HEADS
+    unknown = [h for h in heads if h not in AVAILABLE_HEADS]
+    if unknown:
+        raise ValueError(f"Unknown head(s) {unknown}; available: {AVAILABLE_HEADS}")
+    log.info(f"Scoring heads: {heads}")
+
     with DbContex(embed_config):
-        for model_head in AVAILABLE_HEADS:
+        for model_head in heads:
             eval(cfg, embed_config, model_name, cfg.dataset,
                  short_model_name, model_head, override)
 

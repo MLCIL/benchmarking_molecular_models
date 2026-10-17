@@ -1,4 +1,5 @@
 from src.common.types import SmilesEmbedder
+from src.common.utils import get_embed_cpu_njobs
 
 from skfp.fingerprints import ECFPFingerprint, AtomPairFingerprint, TopologicalTorsionFingerprint
 from skfp.preprocessing import MolFromSmilesTransformer
@@ -13,7 +14,11 @@ class SKFingerprintEmbedder(SmilesEmbedder):
             self._count = True
         else:
             self._count = False
-        self._pipeline = make_pipeline(MolFromSmilesTransformer(), fingerprint(count=self._count))
+        n_jobs = get_embed_cpu_njobs()
+        self._pipeline = make_pipeline(
+            MolFromSmilesTransformer(n_jobs=n_jobs),
+            fingerprint(count=self._count, n_jobs=n_jobs),
+        )
         
     def forward(self, smiles):
         return self._pipeline.transform(smiles)

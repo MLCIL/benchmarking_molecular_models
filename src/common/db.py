@@ -48,15 +48,26 @@ class Runtime(BaseModel):
     dataset = CharField()
     embedder = CharField()
     device = CharField()
-    
+
     mean_runtime = FloatField()
     std_runtime = FloatField()
+    total_runtime = FloatField()
     n_samples = IntegerField()
 
 
 def close_db():
     proxy.close()
-    
+
+
+def _ensure_runtime_columns(database: SqliteDatabase) -> None:
+    """Add columns introduced after the initial Runtime schema (SQLite)."""
+    rows = database.execute_sql("PRAGMA table_info(runtime)").fetchall()
+    if not rows:
+        return
+    existing = {row[1] for row in rows}
+    if "total_runtime" not in existing:
+        database.execute_sql("ALTER TABLE runtime ADD COLUMN total_runtime REAL")
+
 
 class Singleton(type):
     _instances = {}
@@ -75,6 +86,7 @@ class DbContex(metaclass=Singleton):
         self._database = SqliteDatabase(join(get_original_cwd(), self._config.database))
         proxy.initialize(self._database)
         proxy.create_tables([EmbeddingMeta, Runtime, ClassificationReport, ClusterizationReport], safe=True)
+        _ensure_runtime_columns(self._database)
         return None
 
     def __exit__(self, *args, **kwargs):

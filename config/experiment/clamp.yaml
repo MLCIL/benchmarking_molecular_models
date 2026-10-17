@@ -1,11 +1,8 @@
 # @package _global_
-
 defaults:
-  - override /hydra/launcher: joblib
   - _self_
 
-model_name: CLAMP
-
 hydra:
-  launcher:
-    n_jobs: 4
+  sweeper:
+    params:
+      +model: glob(clamp*)

@@ -47,6 +47,18 @@ __pycache__/
 ### Output files ###
 *.db
 *.csv
-!results/*.db
-!results/*.csv
+*.tex
+*.out
+mlruns/
+!results/**/*.db
+!results/**/*.csv
+!datasets/*.csv
 
+*.pdf
+*.xlsx
+*.lock
+*.pkl
+*.eps
+*.tif
+*.patch
+paper_figures/

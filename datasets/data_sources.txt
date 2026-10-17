@@ -1,0 +1,72 @@
+NICEATM toxicity:
+- source: https://ntp.niehs.nih.gov/whatwestudy/niceatm/test-method-evaluations/acute-systemic-tox/acute-inhalation-toxicity
+- target: acute oral systemic toxicity, binarized LD50 (very toxic < 50 mg/kg, non-toxic >2000 mg/kg)
+- predefined train/test split used
+- labels mapping: "non-toxic" -> 0, "very toxic" -> 2, others -> 1 (ambiguous)
+- removed rows with missing label ("NA") for either column
+- removed 1 train molecule that could not be parsed
+
+Rat carcinogenicity:
+- source: https://www.sciencedirect.com/science/article/pii/S2352340918300805
+- target: in vivo rat carcinogenicity from PHARM dataset
+- created scaffold split
+- labels mapping: "Positive" -> 1, "Negative" -> 0
+- removed 6 molecules that could not be parsed
+
+DILIrank 2.0:
+- source: https://www.sciencedirect.com/science/article/pii/S1359644625001989?via%3Dihub#da005
+- target: DILI toxicity, none/low/high
+- created scaffold split
+- removed 354 compounds with "Ambiguous-DILI-concern" label
+- mapped names to SMILES with PubChem, removed 92 compounds that couldn't be found
+- labels mapping: "vNo-DILI-concern" -> 0, "vLess-DILI-concern" -> 1, "vMOST-DILI-concern" -> 2
+
+B3DB:
+- source: https://www.nature.com/articles/s41597-021-01069-5
+- target: blood-brain barrier penetration at logBB threshold -1
+- created scaffold split
+- removed 2 molecules that could not be parsed
+
+Phospholipidosis:
+- source: www.sciencedirect.com/science/article/pii/S2666389925003010
+- target: phospholipidosis, assay-dependent threshold of phospholipids concentration
+- created scaffold split
+
+BSEP:
+- source: https://doi.org/10.1021/acs.jcim.0c00950
+- target: bile salt export pump (BSEP) inhibition, pIC50 = 4 threshold
+- created scaffold split
+
+Mitochondrial toxicity:
+- source: https://onlinelibrary.wiley.com/doi/10.1002/minf.202000005
+- target: mitochondrial toxicity, binary, from various sources
+- predefined train-test split
+- removed 2 train and 1 test molecule that could not be parsed
+
+Skin sensitization:
+- source: https://pubs.acs.org/crtoec/article/36/5/734/309277/The-Good-The-Bad-and-The-Perplexing-Structural
+- target: skin sensitization, active/inactive
+- created scaffold split
+
+Bioavailability:
+- source: https://pubs.acs.org/jcisd8/article-abstract/60/6/2660/849645/ADME-Prediction-with-KNIME-Development-and?redirectedFrom=fulltext
+- target: bioavailability F >= 50
+- removed 1 test molecule that could not be parsed
+- predefined split
+
+Eye corrosion:
+- source: https://pubs.rsc.org/ra/article/7/11/6697/543932/In-silico-prediction-of-serious-eye-irritation-or
+- target: GHS H314 & H318 classification
+- created scaffold split
+
+Eye irritation:
+- source: https://pubs.rsc.org/ra/article/7/11/6697/543932/In-silico-prediction-of-serious-eye-irritation-or
+- target: GHS H319
+- created scaffold split
+
+Human photosensitizers:
+- source: https://doi.org/10.1021/acs.chemrestox.9b00338
+- target: whether drug induces photosensitization in humans
+- predefined split
+- removed 5 train and 1 test molecule that could not be parsed
+

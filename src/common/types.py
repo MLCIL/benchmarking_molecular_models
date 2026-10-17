@@ -7,7 +7,13 @@ import pandas as pd
 import numpy as np
 import json
 import base64
-import torch
+
+try:
+    import torch
+except (ImportError, OSError):
+    # Not every wrapper venv can load torch (cddd pins Python 3.6, whose old
+    # torch build fails on modern kernels) and those wrappers never touch it.
+    torch = None
 
 
 try:
@@ -21,7 +27,7 @@ class NumpyEncoder(json.JSONEncoder):
         """
         if input object is a ndarray it will be converted into a dict holding dtype, shape and the data base64 encoded
         """
-        if isinstance(obj, torch.Tensor):
+        if torch is not None and isinstance(obj, torch.Tensor):
             data_b64 = base64.b64encode(obj.cpu().numpy().tobytes()).decode('utf-8')
             return dict(__torch_tensor__=data_b64,
                         dtype=str(obj.dtype).split('.')[-1],
@@ -51,7 +57,14 @@ def json_numpy_obj_hook(dct):
         return pd.DataFrame(**dct['__dataframe__'])
     elif isinstance(dct, dict) and '__torch_tensor__' in dct:
         data = base64.b64decode(dct['__torch_tensor__'])
-        return torch.tensor(np.frombuffer(data, dct['dtype']).reshape(dct['shape']))
+        array = np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
+        if torch is None:
+            # Torch-less venvs (cddd) embed SMILES only and never read these
+            # graph tensors, so hand back the raw array rather than failing
+            # the whole dataset load.
+            log.warning("torch unavailable; decoding stored tensor as numpy array")
+            return array
+        return torch.tensor(array)
     return dct
 
 
@@ -67,6 +80,8 @@ class EmbeddingConfig:
     svd_directory: str
     max_invalid_embeddings: int
     max_samples: Optional[int] = None
+    # Shared CSV for embedding runtime measurements (model venvs lack peewee).
+    runtime_csv: str = "data/clock/runtime.csv"
 
 
 @dataclass

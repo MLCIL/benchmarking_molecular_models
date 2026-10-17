@@ -85,17 +85,35 @@ def evaluate_tdc_safe(y_pred: np.ndarray, y_test: np.ndarray, dataset_name: str,
 def get_skfp_roc_auc(y_pred: np.ndarray, y_test: np.ndarray) -> float:
     if isinstance(y_pred, list):
         y_pred = np.array(y_pred)
-    
-    if y_test.ndim == 1:
-        y_pred = y_pred[:, 1]
+
+    # A single target stored as a column looks multilabel to the branches below,
+    # which is how a 3-class target silently scored as if it were multilabel.
+    if y_test.ndim > 1 and y_test.shape[1] == 1:
+        y_test = y_test.ravel()
+
     # In multioutput case, the prediction are in shape (n_class, n_samples, 2), and we want (n_samples, n_class) for positive label
     if y_pred.ndim == 3:
         y_pred = y_pred[:, :, 1].T
-        
+
+    if y_test.ndim == 1:
+        finite = y_test[~np.isnan(y_test)] if np.issubdtype(y_test.dtype, np.floating) else y_test
+        classes = np.unique(finite)
+        if len(classes) > 2:
+            # Multiclass: One-vs-Rest needs the full (n_samples, n_classes)
+            # probability matrix. Slicing column 1 (the binary convention below)
+            # would silently score a single arbitrary class instead.
+            return roc_auc_score(
+                y_test, y_pred, average='macro', multi_class='ovr', labels=classes
+            )
+        # Binary: predict_proba gives (n_samples, 2); AUROC wants the positive column.
+        if y_pred.ndim == 2 and y_pred.shape[1] == 2:
+            y_pred = y_pred[:, 1]
+        return roc_auc_score(y_test, y_pred, average='macro')
+
     if np.isnan(np.min(y_test)):
         return multioutput_auroc_score(y_test, y_pred)
     try:
-        return roc_auc_score(y_test, y_pred)
+        return roc_auc_score(y_test, y_pred, average='macro', multi_class='ovr')
     except Exception:
         return multioutput_auroc_score(y_test, y_pred)
 

@@ -32,7 +32,7 @@ class CoatiEmbedder(SmilesEmbedder):
     
     @property
     def device_used(self):
-        return self._device.type.split(':')[0]  # Returns 'cuda' or 'cpu' based on the device used
+        return str(self._device)
 
 
 def get_embedder(name, **kwargs) -> SmilesEmbedder:

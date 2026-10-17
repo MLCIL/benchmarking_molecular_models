@@ -1,0 +1,5 @@
+cls: ChemeleonFingerprint
+params:
+  n_jobs: 16
+  batch_size: 1024
+  device: cpu

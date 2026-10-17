@@ -1,0 +1,16 @@
+[project]
+name = "chemeleon-posthoc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "filelock>=3.32.3",
+    "hydra-core>=1.3.5",
+    "hydra-joblib-launcher>=1.2.0",
+    "scikit-fingerprints[neural]",
+    "tqdm>=4.70.0",
+]
+
+[tool.uv.sources]
+scikit-fingerprints = { git = "https://github.com/MLCIL/scikit-fingerprints.git", branch = "feat/chemeleon" }

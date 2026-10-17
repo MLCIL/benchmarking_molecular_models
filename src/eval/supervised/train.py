@@ -12,8 +12,31 @@ from skfp.metrics import multioutput_auroc_score
 from sklearn.metrics import roc_auc_score, make_scorer
 
 
-def fit_model(X: np.ndarray, y: np.ndarray, 
-              task: str, metric_name: str, 
+def _make_auroc_scorer(y: np.ndarray):
+    if y.ndim > 1 and y.shape[1] > 1:
+        log.info("Using multioutput AUROC scorer")
+        return make_scorer(multioutput_auroc_score, response_method="predict_proba")
+
+    labels = np.unique(y)
+    if len(labels) > 2:
+        log.info(f"Using multiclass OvR AUROC scorer over {len(labels)} classes")
+
+        def multiclass_auroc(y_true, y_score):
+            # labels= pins the expected class order to the full training set, so
+            # a CV fold whose split happens to miss a class does not fail with
+            # "Number of classes in y_true not equal to the number of columns".
+            return roc_auc_score(
+                y_true, y_score, multi_class="ovr", average="macro", labels=labels
+            )
+
+        return make_scorer(multiclass_auroc, response_method="predict_proba")
+
+    log.info("Using binary AUROC scorer")
+    return get_sklearn_scorer("roc_auc")
+
+
+def fit_model(X: np.ndarray, y: np.ndarray,
+              task: str, metric_name: str,
               model_head: str, memory_weight: int):
     if task == "classification":
         # no_outputs = y.shape[1]
@@ -24,16 +47,15 @@ def fit_model(X: np.ndarray, y: np.ndarray,
     else:
         raise ValueError(f"Unknown task: {task}")
     
-    if len(y.shape) == 1:
-        y = y.reshape(-1, 1)
-    
-    if y.shape[1] > 1:
-        log.info("Using multioutput AUROC scorer")
-        scorer = make_scorer(multioutput_auroc_score, response_method='predict_proba')
-    else:
-        scorer = get_sklearn_scorer('roc_auc')
-
     y = np.nan_to_num(y, nan=0)
+
+    # Single-target y must stay 1D: a (n, 1) column makes sklearn emit
+    # DataConversionWarning and hides multiclass targets behind a shape that
+    # looks multilabel. Genuinely multilabel y (n, k>1) is left alone.
+    if y.ndim > 1 and y.shape[1] == 1:
+        y = y.ravel()
+
+    scorer = _make_auroc_scorer(y)
 
     log.info(f"Shapes: X={X.shape}, y={y.shape}")
 

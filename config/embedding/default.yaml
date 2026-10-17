@@ -4,8 +4,9 @@ data_directory: data/downloaded
 prepared_directory: data/prepared
 predictions_directory: data/predictions
 clock_directory: data/clock
+runtime_csv: data/clock/runtime.csv
 svd_directory: data/svd
-database: data/meta.db
+database: data/meta_current.db
 
 max_invalid_embeddings: 50
 

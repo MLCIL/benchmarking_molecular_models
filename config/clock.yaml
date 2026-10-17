@@ -2,10 +2,15 @@ defaults:
   - embedding: default
   - _self_
 
-n_trials: 5
+cache: false
+batch_size: 10000
+# When the embedder lands on CUDA, also measure a CPU run in the same job.
+# Disabled: the CPU pass on GPU-capable models is prohibitively slow on MUV.
+measure_cpu_when_gpu: false
+illegal_smiles: config/illegal_smiles.txt
 
 hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      +dataset: glob(AMES)
+      +dataset: glob(clf_ogbg-molmuv)

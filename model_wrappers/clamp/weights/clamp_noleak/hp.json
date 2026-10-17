@@ -1,0 +1,23 @@
+{
+  "model": "ScaledMLPLayerNorm",
+  "compound_features_size": 8192,
+  "assay_features_size": 512,
+  "embedding_size": 768,
+  "hidden_layers": [4096, 2048],
+  "compound_layer_sizes": [4096, 2048],
+  "assay_layer_sizes": [4096, 2048],
+  "dropout_input": 0.1,
+  "dropout_hidden": 0.2,
+  "nonlinearity": "ReLU",
+  "norm": true,
+  "compound_mode": "morganc+rdkc",
+  "assay_mode": "clip",
+  "dataset": "./clamp/data/pubchem18/",
+  "split": "time_a",
+  "drop_cidx_path": "./clamp/data/pubchem18/cidx_overlap_benchmark.npy",
+  "lr_ini": 5e-05,
+  "batch_size": 1024,
+  "optimizer": "AdamW",
+  "loss_fun": "BCE",
+  "l2": 0.0005
+}
