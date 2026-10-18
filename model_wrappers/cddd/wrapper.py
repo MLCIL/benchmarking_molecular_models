@@ -1,6 +1,7 @@
 import os
 
 from src.common.types import SmilesEmbedder
+from src.common.utils import get_embed_cpu_njobs
 from cddd.inference import InferenceModel
 from hydra.utils import get_original_cwd
 
@@ -11,7 +12,7 @@ class CDDDEmbedder(SmilesEmbedder):
             self.__infer_model = InferenceModel(model_dir=path,
                                  use_gpu=False, # This is Python 3.6 so MacOS is out of question
                                  batch_size=512,
-                                 cpu_threads=6)
+                                 cpu_threads=get_embed_cpu_njobs())
     
     def forward(self, smiles):
         return self.__infer_model.seq_to_emb(smiles)

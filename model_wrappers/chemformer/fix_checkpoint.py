@@ -18,12 +18,15 @@ for file in files:
         model = torch.load(backup_filename,
                         map_location=lambda storage, loc: storage)
         model["hyper_parameters"]["vocabulary_size"] = model["hyper_parameters"].pop("vocab_size")
-        
+
         # Drop deepspeed dependencies
         if "module" in model:
             model = model["module"]
     except Exception as e:
+        # Put the checkpoint back: the rename above already moved it aside, so
+        # bailing out here would otherwise leave no .ckpt for the wrapper.
+        os.rename(backup_filename, file)
         print(f"Failed to load {file}. cause: {e}, Skipping.")
         continue
-    
+
     torch.save(model, file)

@@ -3,7 +3,7 @@
 if $INSTALL_DEP; then
     echo $(pwd)
     if [ ! -d "weights" ]; then
-        echo "Please donwload ckpt files under the `weights` directory!"
+        echo "Please donwload ckpt files under the 'weights' directory!"
         echo "https://az.app.box.com/s/7eci3nd9vy0xplqniitpk02rbg9q2zcq"
         exit 10
     fi
@@ -16,7 +16,9 @@ if $INSTALL_DEP; then
     pip install deepspeed==0.9.0
     pip install "numpy>1.22.0,<2.0.0"
 
-    # python fix_checkpoint.py
+    # Released ckpts carry hyper_parameters.vocab_size; Chemformer expects
+    # vocabulary_size. Idempotent: skips any ckpt with a .backup alongside it.
+    python fix_checkpoint.py
 fi
 
 export PYTHONPATH=$PYTHONPATH:$PWD/chemformer_repo

@@ -1,0 +1,20 @@
+defaults:
+  - _self_
+  - override hydra/launcher: joblib
+
+output_dir: datasets
+lock_file: .result.lock
+result_file: result.csv
+cv_folds: 5
+n_jobs: 16
+disable_tqdm: True
+heads: [rf, ridge, knn]
+
+hydra:
+  mode: MULTIRUN
+  launcher:
+    n_jobs: 4
+  sweeper:
+    params:
+      +dataset: glob(*)
+      +model: glob(*)

@@ -38,6 +38,9 @@ class SimSonWrapper(SmilesEmbedder):
             torch.load(model_path, map_location=self._device)
         )
         self._model.to(self._device)
+        # Eval mode, as upstream validates and tests (trainer.py calls model.eval());
+        # in training mode the 0.1 embedding dropout stays on.
+        self._model.eval()
         self._tokenizer = Tokenizer.from_file(tokenizer_path)
     
     def forward(self, smiles):
@@ -56,7 +59,7 @@ class SimSonWrapper(SmilesEmbedder):
     
     @property
     def device_used(self):
-        return self._device.type.split(':')[0]  # Returns 'cpu' or 'cuda'
+        return str(self._device)
     
 
 def get_embedder(name, **_kwargs) -> SmilesEmbedder:

@@ -1,4 +1,3 @@
-
 # Adding Custom Models
 
 ---
@@ -16,7 +15,7 @@ This file should contain a single line with the Python version you want to use f
 3.11
 ```
 
-It will be used to initialize the virtual environment using pyenv.
+It is read by [`embed_wrapper.sh`](../embed_wrapper.sh), which creates the model virtualenv with `uv venv` (`uv venv venv --seed --python=python$version`).
 
 
 ### wrapper.py
@@ -41,7 +40,7 @@ def get_embedder(name, **_kwargs):  # <-- **kwargs are important, as this functi
 
 `init.sh` is used once for every model to initialize the `venv` with all dependencies needed, and optionally to download any model weights. The script is run via [embed_wrapper.sh](../embed_wrapper.sh). Every implementation in our benchmark uses a separate `venv` to avoid dependency conflicts.
 
-The virtual environment is provided via the `embed_wrapper.sh` script and is initialized before `init.sh` is run. You can use the `$INSTALL_DEP` variable as a flag to configure dependency installation only once.
+The virtual environment is created with **uv** by `embed_wrapper.sh` before `init.sh` is run (`uv venv` + `uv pip`; the model `venv/bin` is prepended to `PATH` for `init.sh`). You can use the `$INSTALL_DEP` variable as a flag to configure dependency installation only once (typically `pip install …` / `uv pip install …`). Embedding itself is launched with `uv run --python <wrapper>/venv/bin/python`.
 
 At the end, `init.sh` should provide the environment variable `HYDRA_EXPERIMENT` containing the name of the experiment in `config/experiment/`. This is used to configure the model via Hydra.
 
@@ -69,17 +68,49 @@ Once you have defined your model, you can run it using the `embed_wrapper.sh` sc
 Example command to run the model:
 
 ```bash
-bash embed_wrapper.sh model_wrappers/your_model
+./embed_wrapper.sh model_wrappers/your_model
 ```
 
+Extra Hydra CLI overrides after the wrapper path are forwarded to `embed.py`:
 
-This will create embeddings for all datasets and store them in the embedding directory, by default: `data/embedded/dataset_name/model_name.(joblib|json)`. You can change the embedding directory by modifying the [embedding config](../config/embedding/default.yaml).
+```bash
+./embed_wrapper.sh model_wrappers/your_model \
+  'hydra.sweeper.params.+dataset=glob(clf_ogbg-molbbbp)'
+```
 
-To evaluate the scores on the datasets using the predefined model grid, please run the following command:
+This will create embeddings and store them in the embedding directory, by default: `data/embedded/dataset_name/model_name.(joblib|json)`. You can change the embedding directory by modifying the [embedding config](../config/embedding/default.yaml).
+
+To evaluate the scores on the datasets using the predefined model grid, please run the following command (from the **root** project environment; prefer `uv run`):
 
 ```sh
-./run_scoring.sh your_model_name
+uv run python score.py --multirun +experiment=your_model_name
+# or background: ./run_scoring.sh your_model_name
 ```
 
-
 After that, the results will be stored in the `data/meta.db` SQLite database.
+
+### Development smoke test (recommended)
+
+Before a full-benchmark run, validate the wrapper on BBBP only and write scores to a temporary DB. Prefer **CLI overrides** or a dedicated experiment config — do **not** edit core `config/embed.yaml` / `config/score.yaml`.
+
+See [`AGENTS.md`](../AGENTS.md) for the full recipe. Sketch:
+
+```bash
+uv sync
+
+# Root env: download BBBP
+uv run python download.py --multirun \
+  'hydra.sweeper.params.+dataset=glob(clf_ogbg-molbbbp)'
+
+# Model env: embed BBBP only (overrides forwarded by embed_wrapper.sh)
+./embed_wrapper.sh model_wrappers/your_model \
+  'hydra.sweeper.params.+dataset=glob(clf_ogbg-molbbbp)'
+
+# Root env: score → temp DB
+uv run python score.py --multirun \
+  +experiment=your_model_name \
+  'hydra.sweeper.params.+dataset=glob(clf_ogbg-molbbbp)' \
+  ++embedding.database=data/temp_dev.db
+```
+
+If the experiment sweeps multiple model variants (e.g. `+model: glob(your_model_*)`), run **all** variants through this BBBP smoke test before reporting success.

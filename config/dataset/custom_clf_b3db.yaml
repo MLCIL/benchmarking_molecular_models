@@ -1,0 +1,7 @@
+name: B3DB_classification
+metric: roc_auc
+task: classification
+
+source:
+  name: custom
+  custom_root: datasets

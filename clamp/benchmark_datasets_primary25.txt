@@ -1,0 +1,27 @@
+# Primary benchmark universe for clamp_noleak_v2: the 25 datasets every embedder
+# is scored on in data/meta_current.db (hERG in, ogbg-moltoxcast out). Joblib stems.
+AMES
+Bioavailability_Ma
+CYP1A2_Veith
+CYP2C19_Veith
+CYP2C9_Substrate_CarbonMangels
+CYP2C9_Veith
+CYP2D6_Substrate_CarbonMangels
+CYP2D6_Veith
+CYP3A4_Substrate_CarbonMangels
+CYP3A4_Veith
+DILI
+hERG
+hERG_Karim
+HIA_Hou
+ogbg-molbace
+ogbg-molbbbp
+ogbg-molclintox
+ogbg-molhiv
+ogbg-molmuv
+ogbg-molsider
+ogbg-moltox21
+PAMPA_NCATS
+Pgp_Broccatelli
+SARSCoV2_3CLPro_Diamond
+SARSCoV2_Vitro_Touret

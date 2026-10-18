@@ -22,11 +22,11 @@ def main(cfg):
         return
 
     dataset = load(cfg.dataset, cfg.embedding.raw_directory)
-    
+
     joblib.dump(dataset, filename)
     dataset.serialize_legacy(legacy_filename)
     print(f"Dataset {dataset_name} saved to {filename}")
-    
+
 
 if __name__ == '__main__':
     main()

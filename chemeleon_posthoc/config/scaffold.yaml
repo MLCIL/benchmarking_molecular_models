@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+  - override hydra/launcher: joblib
+
+raw_data_dir: ../datasets
+output_dir: datasets_scaffold
+n_folds: 5
+use_csk: false
+
+hydra:
+  mode: MULTIRUN
+  launcher:
+    backend: multiprocessing
+    n_jobs: 8
+  sweeper:
+    params:
+      +dataset: glob(*)

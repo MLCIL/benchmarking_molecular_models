@@ -15,6 +15,10 @@ from .eval_metrics import evaluate
 from .utils import get_model_version_hash, NpEncoder
 from ...common.types import EvaluationResult, EmbeddedDataset
 from ...common.db import ClassificationReport
+from ...common.pandas_compat import install_pandas1_unpickle_shim
+
+# Wrappers pinned to pandas<2 pickle embeddings this venv's pandas cannot read.
+install_pandas1_unpickle_shim()
 
 
 def eval_embedding(
@@ -26,8 +30,8 @@ def eval_embedding(
 ) -> EvaluationResult:
     log.info("Training model")
     head_result = fit_and_eval_embedding(
-        dataset=data, 
-        metric_name=metric_name, 
+        dataset=data,
+        metric_name=metric_name,
         model_head=model_head,
         memory_weight=dataset_config.get('memory_weight', DEFAULT_MEMORY_WEIGHT))
     log.info(f"Training complete, best CV result: {head_result.cv_score}")
@@ -51,8 +55,18 @@ def check_if_already_evaluated(
         (ClassificationReport.model == head_name)
     ).count()
     if runs > 1:
-        raise ValueError("Multiple runs found for the same model, dataset and metric")
-    return runs == 1
+        # Duplicates are usually the same work recorded under two different
+        # library_hash values. That is redundant data, not a reason to abort:
+        # raising here killed the whole hydra sweep over one stale group.
+        # Scoring with cache=false collapses them, since the override path
+        # deletes every matching row before writing a fresh one.
+        log.warning(
+            f"Found {runs} existing runs for dataset={dataset_name}, "
+            f"embedder={model_name}, head={head_name}, metric={metric_name}. "
+            "Treating as already evaluated; re-run with cache=false to collapse "
+            "them into a single row."
+        )
+    return runs >= 1
 
 
 def delete_previous_evaluations(
@@ -89,14 +103,11 @@ def eval_procedure(
             return
         log.warning("Model already evaluated, overriding")
         delete_previous_evaluations(dataset_info.name, model_name, dataset_info.metric, model_head)
-        
-    if model_head == 'knn' and 'muv' in dataset_info.name:
-        log.error("Skipping KNN evaluation for MUV datasets, not supported")
-        return
+
 
     embedded_filename = join(get_original_cwd(), embedded_dir, dataset_info.name, f"{model_name}.joblib")
     legacy_filename = join(get_original_cwd(), embedded_dir, dataset_info.name, f"{model_name}.json")
-    
+
     if os.path.exists(legacy_filename):
         log.info("Legacy embedded dataset found, converting to new format")
         embedded_data = EmbeddedDataset.deserialize_legacy(legacy_filename)
@@ -110,11 +121,11 @@ def eval_procedure(
     if embedded_data.X is None:
         log.error("Embedded dataset is empty")
         raise RuntimeError("Embedded dataset is empty")
-    
+
     if isinstance(embedded_data.X, torch.Tensor):
         log.info("Converting torch.Tensor to numpy array")
         embedded_data.X = embedded_data.X.detach().cpu().numpy()
-    
+
     if len(embedded_data.X.shape) == 1:
         log.warning("Invalid X shape (1 dim), assuming invalid concatenation")
         desired_samples = embedded_data.y.shape[0]
@@ -129,7 +140,7 @@ def eval_procedure(
         model_head,
     )
     log.info(f"Evaluation complete, test result: {result.metric_value}")
-    
+
     ClassificationReport.create(
         dataset=embedded_data.name,
         task=embedded_data.task,
@@ -140,5 +151,5 @@ def eval_procedure(
         cv_metric_name=dataset_info.metric,
         cv_metric=result.cv_metric_value,
         test_metric_name=result.metric_name,
-        test_metric=result.metric_value,   
+        test_metric=result.metric_value,
     )

@@ -1,0 +1,5 @@
+# Cloned upstream sources (created by init.sh)
+mole_repo/
+
+# Pretrained weights from Zenodo (model.pth already covered by root *.pth)
+ckpt/

@@ -20,7 +20,12 @@ class MolBertEmbedder(SmilesEmbedder):
     @property
     def name(self):
         return self._model_name
-    
-    
+
+    @property
+    def device_used(self):
+        return str(self._embedder.device)
+
+
+
 def get_embedder(name, **_kwagrs) -> MolBertEmbedder:
     return MolBertEmbedder(name)

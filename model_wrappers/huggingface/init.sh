@@ -1,7 +1,9 @@
 #!/bin/bash
 
 if $INSTALL_DEP; then
-    pip install transformers[torch] selfies==2.1.1 rdkit
+    # SequenceSummary was removed from transformers.modeling_utils in newer
+    # releases; pin to the version simson also uses, which still has it.
+    pip install "transformers[torch]==4.42.3" selfies==2.1.1 rdkit
 
     pip install sentencepiece protobuf sentence-transformers
 
