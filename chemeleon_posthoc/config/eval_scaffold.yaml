@@ -1,0 +1,11 @@
+# Same as eval.yaml, but on the Bemis-Murcko scaffold 5-fold splits produced by
+# scaffold_split.py (datasets_scaffold/<name>_split.csv), writing to a separate
+# results file so the Butina results in result.csv are left untouched.
+#   .venv/bin/python eval.py --config-name eval_scaffold
+defaults:
+  - eval
+  - _self_
+
+output_dir: datasets_scaffold
+lock_file: .result_scaffold.lock
+result_file: result_scaffold.csv

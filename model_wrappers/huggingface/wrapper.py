@@ -7,13 +7,12 @@ from rdkit import Chem
 from os.path import join
 from hydra.utils import get_original_cwd
 from tqdm.auto import tqdm
-from src.common.utils import get_device, batch
+from src.common.utils import get_device, batch, get_embed_cpu_njobs
 from src.common.types import SmilesEmbedder
 from abc import ABC
 from typing import Optional
 from transformers import AutoModel, AutoTokenizer, RobertaConfig, RobertaTokenizer, RobertaModel
 from joblib import Parallel, delayed
-import multiprocessing
 from sentence_transformers import SentenceTransformer
 from transformers.modeling_utils import SequenceSummary
 
@@ -42,15 +41,21 @@ def smiles_to_selfies(smiles):
 class HuggingFaceSmilesEmbedder(SmilesEmbedder, ABC):
     MODEL_PATH = None
     BATCH_MODE = True
-    
+    # Hub commit to load remote code from. Pin it where the newest revision
+    # needs a transformers we cannot install; None tracks the latest.
+    REVISION = None
+
     def __init__(self, batch_size: int = 128, model_path: Optional[str] = None, device: Optional[str] = None, init_models: bool = True):
         if model_path is None:
             model_path = self.MODEL_PATH
         self._device = get_device(device)
         self._model_name = model_path.split("/")[-1]
+        from_pretrained_kwargs = {"trust_remote_code": True}
+        if self.REVISION is not None:
+            from_pretrained_kwargs["revision"] = self.REVISION
         if init_models:
-            self._model = AutoModel.from_pretrained(model_path, trust_remote_code=True).to(self._device)
-            self._tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+            self._model = AutoModel.from_pretrained(model_path, **from_pretrained_kwargs).to(self._device)
+            self._tokenizer = AutoTokenizer.from_pretrained(model_path, **from_pretrained_kwargs)
         else:
             self._model = None
             self._tokenizer = None
@@ -82,11 +87,15 @@ class HuggingFaceSmilesEmbedder(SmilesEmbedder, ABC):
     
     @property
     def device_used(self):
-        return self._device.type.split(':')[0]
+        return str(self._device)
     
 
 class MolFormerEmbedder(HuggingFaceSmilesEmbedder):
     MODEL_PATH = "ibm/MoLFormer-XL-both-10pct"
+    # Newer revisions of the hub-hosted modeling code import
+    # transformers.masking_utils, which does not exist in the transformers
+    # 4.42.3 that SELFormer's SequenceSummary import forces us onto.
+    REVISION = "7b12d946c181a37f6012b9dc3b002275de070314"
 
     def _model_batch(self, batch):
         return self._model(**self._tokenizer(batch, return_tensors="pt", padding=True).to(self._device)).pooler_output
@@ -118,7 +127,7 @@ class SELFormerEmbedder(HuggingFaceSmilesEmbedder):
         config.output_hidden_states = True
         self._tokenizer = RobertaTokenizer.from_pretrained(join(get_original_cwd(), "model_wrappers/huggingface/selformer_repo/data/RobertaFastTokenizer"))
         self._model = RobertaModel.from_pretrained(model_path, config=config).to(self._device)
-        self._joblib_backend = Parallel(n_jobs=multiprocessing.cpu_count())
+        self._joblib_backend = Parallel(n_jobs=get_embed_cpu_njobs())
         
     def forward(self, smiles):
         smiles = list(self._joblib_backend(delayed(smiles_to_selfies)(s) for s in smiles))
@@ -138,9 +147,12 @@ class ChemFMEmbedder(HuggingFaceSmilesEmbedder):
     def __init__(self, model_path: str):
         if '_' in model_path:
             model_path = model_path.split('_')[0]
-        
+
+        # No DataParallel: it requires the module to live on device_ids[0]
+        # (cuda:0) and crashes whenever the auto-selector picks another GPU.
+        # It would also spread this model over every visible GPU while every
+        # other embedder times on one, making the runtimes incomparable.
         super().__init__(model_path=model_path, init_models=True)
-        self._model = torch.nn.DataParallel(self._model).to(self._device)
 
     def _model_step(self, s):
         s = s + self.EOS_TOKEN

@@ -1,0 +1,7 @@
+name: phospholipidosis
+metric: roc_auc
+task: classification
+
+source:
+  name: custom
+  custom_root: datasets

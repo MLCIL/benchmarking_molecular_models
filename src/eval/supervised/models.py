@@ -8,6 +8,8 @@ from sklearn.linear_model import  Ridge, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from skfp.distances import tanimoto_count_distance
 
+from .tanimoto_knn import BULK_KNN
+
 
 RF_CLF = {
     "clf__min_samples_split": np.arange(2, 11, 2),
@@ -63,6 +65,38 @@ def get_knn_distance(embeddings_dtype):
         raise ValueError(f"Unsupported embeddings dtype: {embeddings_dtype}. Expected integer or floating point type.")
 
 
+def _knn_pipeline(estimator_cls, embeddings_dtype):
+    """k-NN pipeline for one embedding dtype.
+
+    Integer embeddings (the fingerprints) use Tanimoto, vectorised as a matmul
+    in tanimoto_knn rather than handed to sklearn as a per-pair callable.
+
+    No StandardScaler on this branch. Tanimoto is defined for non-negative count
+    or binary vectors; mean-centring makes the inputs negative, at which point
+    the formula no longer yields a distance in [0, 1] -- it went negative, which
+    sklearn's callable path silently accepted. Scaling first was measuring
+    something that was not Tanimoto.
+
+    Float embeddings keep StandardScaler + cosine, which is a normal and
+    well-defined combination.
+    """
+    if np.issubdtype(embeddings_dtype, np.integer):
+        return Pipeline(
+            [
+                ("clf", BULK_KNN[estimator_cls](
+                    n_jobs=-1, algorithm="brute",
+                    metric=get_knn_distance(embeddings_dtype))),
+            ]
+        )
+    return Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("clf", estimator_cls(n_jobs=-1, metric=get_knn_distance(embeddings_dtype))),
+        ]
+    )
+
+
+
 def get_clf_models(no_output: int, embeddings_dtype):
     if no_output == 1:
         lr_clf = LogisticRegression(n_jobs=-1)
@@ -86,12 +120,7 @@ def get_clf_models(no_output: int, embeddings_dtype):
             "params": lr_params.copy(),
         },
         "knn": {
-            "model": Pipeline(
-                [
-                    ("scaler", StandardScaler()),
-                    ("clf", KNeighborsClassifier(n_jobs=-1, metric=get_knn_distance(embeddings_dtype))),
-                ]
-            ),
+            "model": _knn_pipeline(KNeighborsClassifier, embeddings_dtype),
             "params": KNN_CLF.copy(),
         }
     }
@@ -113,12 +142,7 @@ def get_reg_models(embeddings_dtype):
             "params": RIDGE_REG.copy(),
         },
         "knn": {
-            "model": Pipeline(
-                [
-                    ("scaler", StandardScaler()),
-                    ("clf", KNeighborsRegressor(n_jobs=-1, metric=get_knn_distance(embeddings_dtype))),
-                ]
-            ),
+            "model": _knn_pipeline(KNeighborsRegressor, embeddings_dtype),
             "params": KNN_REG.copy(),
         }
     }

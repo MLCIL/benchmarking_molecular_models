@@ -1,3 +1,9 @@
+import hashlib
+import multiprocessing as mp
+import os
+
+import joblib
+
 import numpy as np
 import paddle.nn as nn
 import paddle
@@ -10,6 +16,20 @@ from tqdm import tqdm
 from os.path import join
 from hydra.utils import get_original_cwd
 from src.common.types import SmilesEmbedder
+from src.common.utils import get_embed_cpu_njobs
+
+
+FEATURE_CACHE_DIR = join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'conformers', 'gem')
+
+
+def _featurize(smile):
+    # Upstream featurization (RDKit EmbedMultipleConfs + MMFF on 10 conformers) is
+    # ~97% of GEM's runtime and minutes per molecule on hard cases, so it runs in a
+    # process pool. Errors come back as strings: RDKit exceptions don't pickle.
+    try:
+        return DownstreamTransformFn(is_inference=True)({"smiles": smile})
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
 
 
 class GEMEmbedder(SmilesEmbedder):
@@ -34,8 +54,9 @@ class GEMEmbedder(SmilesEmbedder):
         self._dim = self.compound_encoder.graph_dim
         self.norm = nn.LayerNorm(self.compound_encoder.graph_dim)
 
-    def step(self, smile):
-        data = self.transformer({"smiles": smile})
+    def step(self, data):
+        if isinstance(data, str):
+            raise RuntimeError(data)
         atom_bond_graphs, bond_angle_graphs = self.collator([data])
         atom_bond_graphs = atom_bond_graphs.tensor()
         bond_angle_graphs = bond_angle_graphs.tensor()
@@ -43,18 +64,36 @@ class GEMEmbedder(SmilesEmbedder):
         _, _, graph_repr = self.compound_encoder(atom_bond_graphs, bond_angle_graphs)
         return self.norm(graph_repr)
     
-    def safe_step(self, smile):
+    def safe_step(self, smile, data):
         try:
-            return self.step(smile).numpy()
+            return self.step(data).numpy()
         except Exception as e:
             print(f"Error processing SMILES '{smile}': {e}")
             return np.array([float('nan')] * self._dim)
-        
+
 
     def forward(self, smiles) -> np.ndarray:
+        smiles = list(smiles)
+        # Opt-in (GEM_FEATURE_CACHE=1): reuse the upstream featurization (conformers)
+        # of an earlier run on the same SMILES list.
+        cache_path = None
+        if os.environ.get('GEM_FEATURE_CACHE') == '1':
+            digest = hashlib.sha1('\n'.join(smiles).encode()).hexdigest()[:16]
+            cache_path = join(FEATURE_CACHE_DIR, f'{digest}.joblib')
+        if cache_path is not None and os.path.exists(cache_path):
+            print(f"Loading GEM feature cache {cache_path}")
+            features = joblib.load(cache_path)
+        else:
+            # fork: workers only run RDKit featurization, never paddle
+            with mp.get_context('fork').Pool(get_embed_cpu_njobs()) as pool:
+                features = list(tqdm(pool.imap(_featurize, smiles, chunksize=4), total=len(smiles)))
+            if cache_path is not None:
+                os.makedirs(FEATURE_CACHE_DIR, exist_ok=True)
+                joblib.dump(features, cache_path)
+                print(f"Saved GEM feature cache {cache_path}")
         repr = [
-            self.safe_step(smile)  # Use safe_step to handle errors gracefully
-            for smile in tqdm(smiles)
+            self.safe_step(smile, data)  # Use safe_step to handle errors gracefully
+            for smile, data in zip(smiles, features)
         ]
         return np.vstack(repr)
 

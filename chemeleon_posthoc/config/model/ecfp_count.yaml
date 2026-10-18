@@ -1,0 +1,4 @@
+cls: ECFPFingerprint
+params:
+  count: True
+  n_jobs: 16

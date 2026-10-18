@@ -29,6 +29,10 @@ class GraphFPWrapper(SmilesEmbedder):
             else check_point['mol_gnn']
         )
         self._model = model.gnn
+        # Eval mode, as upstream evaluates (downstream_old.py calls model.eval()).
+        # In training mode BatchNorm normalises each single-molecule batch by its
+        # own atoms, so the mean-pooled output was the same for every molecule.
+        self._model.eval()
         self._emb_dim = 300
 
     def _forward_step(self, smile):
@@ -53,7 +57,7 @@ class GraphFPWrapper(SmilesEmbedder):
     @property
     def name(self):
         return "GraphFP-" + self._mode
-    
+
     @property
     def device_used(self):
         return "cpu"

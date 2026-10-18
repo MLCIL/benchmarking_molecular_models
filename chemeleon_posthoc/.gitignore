@@ -1,0 +1,4 @@
+.result.lock
+.result_scaffold.lock
+.result_butina_ecfp_knn_tanimoto.lock
+*.csv

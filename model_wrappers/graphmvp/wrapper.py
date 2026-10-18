@@ -10,6 +10,12 @@ from graphmvp_repo.src_classification.models import GNN
 from graphmvp_repo.src_regression.models_complete_feature import GNNComplete
 from graphmvp_repo.src_classification.config import args
 from graphmvp_repo.src_classification.datasets.molecule_datasets import mol_to_graph_data_obj_simple
+# GraphMVP_* checkpoints are OGB-style ("complete feature"): 9 atom / 3 bond
+# features, matching GNNComplete. The classification featurizer above emits
+# only 2 atom features and pairs with GNN.
+from graphmvp_repo.src_regression.datasets_complete_feature.molecule_datasets import (
+    mol_to_graph_data_obj_simple as mol_to_graph_data_obj_complete,
+)
 from rdkit import Chem
 from torch_geometric.data import Batch
 
@@ -84,17 +90,18 @@ class GraphMVPWrapper(SmilesEmbedder):
             'gnn_type': "gin"
         }
         
-        if task == 'classification':
-            log.info("Using classification model")
-            self._base_model = GNN(**model_params)
-        else:
-            self._base_model = GNNComplete(**model_params)
+        # Always GNNComplete: the shipped GraphMVP_* checkpoints are OGB-style
+        # (99 keys, atom_encoder/bond_encoder). Building GNN here for the
+        # classification task fails to load them outright -- GNN expects the
+        # 57-key x_embedding/edge_embedding layout of the GNN-* baselines.
+        log.info("Using complete-feature model for GraphMVP checkpoint")
+        self._base_model = GNNComplete(**model_params)
         self._model_path = join(get_original_cwd(), "model_wrappers/graphmvp/weights/", model)
         self._base_model.load_state_dict(torch.load(self._model_path, map_location=torch.device('cpu')))
 
     def _forward_step(self, smiles):
         pyg_graphs = [
-            mol_to_graph_data_obj_simple(Chem.MolFromSmiles(smile))
+            mol_to_graph_data_obj_complete(Chem.MolFromSmiles(smile))
             for smile in smiles
         ]
         batch = Batch.from_data_list(pyg_graphs)

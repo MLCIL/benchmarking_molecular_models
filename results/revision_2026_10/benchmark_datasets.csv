@@ -1,0 +1,80 @@
+dataset,task,n_molecules_raw,n_removed,n_removed_dative,n_molecules,n_positive,n_negative
+AMES,Y,7278,0,0,7278,3974,3304
+Bioavailability_Ma,Y,640,0,0,640,492,148
+CYP1A2_Veith,Y,12579,0,0,12579,5829,6750
+CYP2C19_Veith,Y,12665,0,0,12665,5819,6846
+CYP2C9_Substrate_CarbonMangels,Y,669,0,0,669,141,528
+CYP2C9_Veith,Y,12092,0,0,12092,4045,8047
+CYP2D6_Substrate_CarbonMangels,Y,667,0,0,667,191,476
+CYP2D6_Veith,Y,13130,0,0,13130,2514,10616
+CYP3A4_Substrate_CarbonMangels,Y,670,0,0,670,355,315
+CYP3A4_Veith,Y,12328,0,0,12328,5110,7218
+DILI,Y,475,0,0,475,236,239
+HIA_Hou,Y,578,0,0,578,500,78
+PAMPA_NCATS,Y,2034,0,0,2034,1739,295
+Pgp_Broccatelli,Y,1218,0,0,1218,650,568
+SARSCoV2_3CLPro_Diamond,Y,880,0,0,880,78,802
+SARSCoV2_Vitro_Touret,Y,1484,0,0,1484,88,1396
+hERG,Y,655,0,0,655,451,204
+hERG_Karim,Y,13445,0,0,13445,6718,6727
+ogbg-molbace,Class,1513,0,0,1513,691,822
+ogbg-molbbbp,p_np,2039,0,0,2039,1560,479
+ogbg-molclintox,FDA_APPROVED,1477,0,0,1477,1383,94
+ogbg-molclintox,CT_TOX,1477,0,0,1477,112,1365
+ogbg-molhiv,HIV_active,41127,43,1,41084,1439,39645
+ogbg-molmuv,MUV-466,93087,0,0,93087,27,14814
+ogbg-molmuv,MUV-548,93087,0,0,93087,29,14705
+ogbg-molmuv,MUV-600,93087,0,0,93087,30,14698
+ogbg-molmuv,MUV-644,93087,0,0,93087,30,14593
+ogbg-molmuv,MUV-652,93087,0,0,93087,29,14873
+ogbg-molmuv,MUV-689,93087,0,0,93087,29,14572
+ogbg-molmuv,MUV-692,93087,0,0,93087,30,14614
+ogbg-molmuv,MUV-712,93087,0,0,93087,28,14383
+ogbg-molmuv,MUV-713,93087,0,0,93087,29,14807
+ogbg-molmuv,MUV-733,93087,0,0,93087,28,14654
+ogbg-molmuv,MUV-737,93087,0,0,93087,29,14662
+ogbg-molmuv,MUV-810,93087,0,0,93087,29,14615
+ogbg-molmuv,MUV-832,93087,0,0,93087,30,14637
+ogbg-molmuv,MUV-846,93087,0,0,93087,30,14681
+ogbg-molmuv,MUV-852,93087,0,0,93087,29,14622
+ogbg-molmuv,MUV-858,93087,0,0,93087,29,14745
+ogbg-molmuv,MUV-859,93087,0,0,93087,24,14722
+ogbg-molsider,Hepatobiliary disorders,1427,0,0,1427,743,684
+ogbg-molsider,Metabolism and nutrition disorders,1427,0,0,1427,996,431
+ogbg-molsider,Product issues,1427,0,0,1427,22,1405
+ogbg-molsider,Eye disorders,1427,0,0,1427,876,551
+ogbg-molsider,Investigations,1427,0,0,1427,1151,276
+ogbg-molsider,Musculoskeletal and connective tissue disorders,1427,0,0,1427,997,430
+ogbg-molsider,Gastrointestinal disorders,1427,0,0,1427,1298,129
+ogbg-molsider,Social circumstances,1427,0,0,1427,251,1176
+ogbg-molsider,Immune system disorders,1427,0,0,1427,1024,403
+ogbg-molsider,Reproductive system and breast disorders,1427,0,0,1427,727,700
+ogbg-molsider,"Neoplasms benign, malignant and unspecified (incl cysts and polyps)",1427,0,0,1427,376,1051
+ogbg-molsider,General disorders and administration site conditions,1427,0,0,1427,1292,135
+ogbg-molsider,Endocrine disorders,1427,0,0,1427,323,1104
+ogbg-molsider,Surgical and medical procedures,1427,0,0,1427,213,1214
+ogbg-molsider,Vascular disorders,1427,0,0,1427,1108,319
+ogbg-molsider,Blood and lymphatic system disorders,1427,0,0,1427,885,542
+ogbg-molsider,Skin and subcutaneous tissue disorders,1427,0,0,1427,1318,109
+ogbg-molsider,"Congenital, familial and genetic disorders",1427,0,0,1427,253,1174
+ogbg-molsider,Infections and infestations,1427,0,0,1427,1006,421
+ogbg-molsider,"Respiratory, thoracic and mediastinal disorders",1427,0,0,1427,1060,367
+ogbg-molsider,Psychiatric disorders,1427,0,0,1427,1016,411
+ogbg-molsider,Renal and urinary disorders,1427,0,0,1427,911,516
+ogbg-molsider,"Pregnancy, puerperium and perinatal conditions",1427,0,0,1427,125,1302
+ogbg-molsider,Ear and labyrinth disorders,1427,0,0,1427,659,768
+ogbg-molsider,Cardiac disorders,1427,0,0,1427,988,439
+ogbg-molsider,Nervous system disorders,1427,0,0,1427,1304,123
+ogbg-molsider,"Injury, poisoning and procedural complications",1427,0,0,1427,946,481
+ogbg-moltox21,NR-AR,7831,0,0,7831,309,6956
+ogbg-moltox21,NR-AR-LBD,7831,0,0,7831,237,6521
+ogbg-moltox21,NR-AhR,7831,0,0,7831,768,5781
+ogbg-moltox21,NR-Aromatase,7831,0,0,7831,300,5521
+ogbg-moltox21,NR-ER,7831,0,0,7831,793,5400
+ogbg-moltox21,NR-ER-LBD,7831,0,0,7831,350,6605
+ogbg-moltox21,NR-PPAR-gamma,7831,0,0,7831,186,6264
+ogbg-moltox21,SR-ARE,7831,0,0,7831,942,4890
+ogbg-moltox21,SR-ATAD5,7831,0,0,7831,264,6808
+ogbg-moltox21,SR-HSE,7831,0,0,7831,372,6095
+ogbg-moltox21,SR-MMP,7831,0,0,7831,918,4892
+ogbg-moltox21,SR-p53,7831,0,0,7831,423,6351
